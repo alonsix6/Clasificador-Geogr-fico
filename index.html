@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador Geográfico de Medios</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="10" fill="url(#gradient)"/>
+                    <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop stop-color="#6366f1"/>
+                            <stop offset="1" stop-color="#8b5cf6"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>Clasificador Geográfico</h1>
+            </div>
+            <p class="subtitle">Clasifica tus registros de medios como NACIONAL o por ciudad</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-box" id="uploadBox">
+                    <div class="upload-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M32 44V20M32 20L24 28M32 20L40 28" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 40V48C12 50.2091 13.7909 52 16 52H48C50.2091 52 52 50.2091 52 48V40" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>Arrastra tu archivo Excel aquí</h2>
+                    <p>o haz clic para seleccionar</p>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+                    <button class="btn btn-primary" id="selectFileBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 17H17M10 3V13M10 3L6 7M10 3L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Seleccionar archivo
+                    </button>
+                </div>
+
+                <!-- File Info -->
+                <div class="file-info hidden" id="fileInfo">
+                    <div class="file-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 4C6 2.89543 6.89543 2 8 2H18L26 10V28C26 29.1046 25.1046 30 24 30H8C6.89543 30 6 29.1046 6 28V4Z" fill="#10B981"/>
+                            <path d="M18 2L26 10H20C18.8954 10 18 9.10457 18 8V2Z" fill="#34D399"/>
+                            <text x="16" y="22" text-anchor="middle" fill="white" font-size="6" font-weight="bold">XLS</text>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <span class="file-name" id="fileName">archivo.xlsx</span>
+                        <span class="file-size" id="fileSize">0 KB</span>
+                    </div>
+                    <button class="btn-icon" id="removeFile" title="Eliminar archivo">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Configuration Section -->
+            <section class="config-section hidden" id="configSection">
+                <h3>Configuración de columnas</h3>
+                <p class="config-description">Selecciona las columnas de tu archivo para la clasificación</p>
+
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label for="colDia">Columna DIA (Fecha)</label>
+                        <select id="colDia"></select>
+                    </div>
+                    <div class="config-item">
+                        <label for="colMedio">Columna MEDIO</label>
+                        <select id="colMedio"></select>
+                    </div>
+                    <div class="config-item">
+                        <label for="colEmisora">Columna EMISORA/SITE</label>
+                        <select id="colEmisora"></select>
+                    </div>
+                    <div class="config-item">
+                        <label for="colVersion">Columna VERSION</label>
+                        <select id="colVersion"></select>
+                    </div>
+                    <div class="config-item">
+                        <label for="colRegion">Columna REGION/ÁMBITO</label>
+                        <select id="colRegion"></select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large" id="processBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2V10M10 10L14 6M10 10L6 6M3 14V16C3 17.1046 3.89543 18 5 18H15C16.1046 18 17 17.1046 17 16V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Procesar archivo
+                </button>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section hidden" id="progressSection">
+                <div class="progress-content">
+                    <div class="spinner"></div>
+                    <h3>Procesando archivo...</h3>
+                    <p id="progressText">Analizando registros</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section hidden" id="resultsSection">
+                <div class="results-header">
+                    <h3>Resultados de la clasificación</h3>
+                    <button class="btn btn-secondary" id="newFileBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Nuevo archivo
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalRecords">0</span>
+                            <span class="stat-label">Total registros</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-national">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 3C12 3 8 8 8 12C8 16 12 21 12 21M12 3C12 3 16 8 16 12C16 16 12 21 12 21M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="nationalRecords">0</span>
+                            <span class="stat-label">NACIONAL</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-groups">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21M23 21V19C23 17.1362 21.7252 15.5701 20 15.126M16 3.12602C17.7252 3.57006 19 5.13623 19 7C19 8.86377 17.7252 10.4299 16 10.874M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalGroups">0</span>
+                            <span class="stat-label">Grupos únicos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-national-groups">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="nationalGroups">0</span>
+                            <span class="stat-label">Grupos NACIONAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div class="distribution-card">
+                    <h4>Distribución por clasificación</h4>
+                    <div class="distribution-chart" id="distributionChart"></div>
+                </div>
+
+                <!-- Download Button -->
+                <button class="btn btn-success btn-large" id="downloadBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 3V13M10 13L6 9M10 13L14 9M3 17H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Descargar Excel clasificado
+                </button>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Clasificación geográfica de registros de medios</p>
+            <p class="footer-note">Las 7 ciudades para NACIONAL: Lima, Arequipa, Trujillo, Cusco, Chiclayo, Huancayo, Piura</p>
+        </footer>
+    </div>
+
+    <!-- SheetJS Library -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
