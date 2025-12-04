@@ -38,9 +38,9 @@
                             <path d="M12 40V48C12 50.2091 13.7909 52 16 52H48C50.2091 52 52 50.2091 52 48V40" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h2>Arrastra tu archivo Excel aquí</h2>
-                    <p>o haz clic para seleccionar</p>
-                    <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+                    <h2>Arrastra tu archivo TXT aquí</h2>
+                    <p>Formato: delimitado por pipes (|)</p>
+                    <input type="file" id="fileInput" accept=".txt" hidden>
                     <button class="btn btn-primary" id="selectFileBtn">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 17H17M10 3V13M10 3L6 7M10 3L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -53,13 +53,13 @@
                 <div class="file-info hidden" id="fileInfo">
                     <div class="file-icon">
                         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 4C6 2.89543 6.89543 2 8 2H18L26 10V28C26 29.1046 25.1046 30 24 30H8C6.89543 30 6 29.1046 6 28V4Z" fill="#10B981"/>
-                            <path d="M18 2L26 10H20C18.8954 10 18 9.10457 18 8V2Z" fill="#34D399"/>
-                            <text x="16" y="22" text-anchor="middle" fill="white" font-size="6" font-weight="bold">XLS</text>
+                            <path d="M6 4C6 2.89543 6.89543 2 8 2H18L26 10V28C26 29.1046 25.1046 30 24 30H8C6.89543 30 6 29.1046 6 28V4Z" fill="#6366f1"/>
+                            <path d="M18 2L26 10H20C18.8954 10 18 9.10457 18 8V2Z" fill="#818cf8"/>
+                            <text x="16" y="22" text-anchor="middle" fill="white" font-size="6" font-weight="bold">TXT</text>
                         </svg>
                     </div>
                     <div class="file-details">
-                        <span class="file-name" id="fileName">archivo.xlsx</span>
+                        <span class="file-name" id="fileName">archivo.txt</span>
                         <span class="file-size" id="fileSize">0 KB</span>
                     </div>
                     <button class="btn-icon" id="removeFile" title="Eliminar archivo">
@@ -70,40 +70,40 @@
                 </div>
             </section>
 
-            <!-- Configuration Section -->
-            <section class="config-section hidden" id="configSection">
-                <h3>Configuración de columnas</h3>
-                <p class="config-description">Selecciona las columnas de tu archivo para la clasificación</p>
-
-                <div class="config-grid">
-                    <div class="config-item">
-                        <label for="colDia">Columna DIA (Fecha)</label>
-                        <select id="colDia"></select>
-                    </div>
-                    <div class="config-item">
-                        <label for="colMedio">Columna MEDIO</label>
-                        <select id="colMedio"></select>
-                    </div>
-                    <div class="config-item">
-                        <label for="colEmisora">Columna EMISORA/SITE</label>
-                        <select id="colEmisora"></select>
-                    </div>
-                    <div class="config-item">
-                        <label for="colVersion">Columna VERSION</label>
-                        <select id="colVersion"></select>
-                    </div>
-                    <div class="config-item">
-                        <label for="colRegion">Columna REGION/ÁMBITO</label>
-                        <select id="colRegion"></select>
+            <!-- Preview Section -->
+            <section class="preview-section hidden" id="previewSection">
+                <div class="preview-header">
+                    <h3>Previsualización de datos</h3>
+                    <span class="preview-count" id="previewCount">0 registros</span>
+                </div>
+                <div class="preview-info">
+                    <div class="info-badge">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 14A6 6 0 108 2a6 6 0 000 12zM8 5v3M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span>Emisoras NACIONAL automático: <strong>ATV+, NATIVA TV, RPP TV, WILLAX PERU</strong></span>
                     </div>
                 </div>
-
-                <button class="btn btn-primary btn-large" id="processBtn">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 2V10M10 10L14 6M10 10L6 6M3 14V16C3 17.1046 3.89543 18 5 18H15C16.1046 18 17 17.1046 17 16V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Procesar archivo
-                </button>
+                <div class="table-container">
+                    <table class="preview-table" id="previewTable">
+                        <thead id="previewHead"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div class="preview-actions">
+                    <button class="btn btn-secondary" id="cancelBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Cancelar
+                    </button>
+                    <button class="btn btn-primary btn-large" id="processBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Procesar y clasificar
+                    </button>
+                </div>
             </section>
 
             <!-- Progress Section -->

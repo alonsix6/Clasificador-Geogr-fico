@@ -7,10 +7,20 @@ const CIUDADES_NACIONAL = new Set([
     'LIMA', 'TRUJILLO', 'AREQUIPA', 'CUSCO', 'CHICLAYO', 'HUANCAYO', 'PIURA'
 ]);
 
+// Emisoras que automáticamente son NACIONAL
+const EMISORAS_NACIONAL = new Set([
+    'ATV+',
+    'NATIVA TV',
+    'RPP TV',
+    'WILLAX PERU'
+]);
+
+// Columnas a mostrar en la previsualización (índices)
+const PREVIEW_COLUMNS = ['#', 'MEDIO', 'DIA', 'VERSION', 'EMISORA/SITE', 'REGION/ÁMBITO'];
+
 // Estado de la aplicación
 let state = {
     file: null,
-    workbook: null,
     data: [],
     columns: [],
     processedData: [],
@@ -28,12 +38,11 @@ const elements = {
     fileName: document.getElementById('fileName'),
     fileSize: document.getElementById('fileSize'),
     removeFile: document.getElementById('removeFile'),
-    configSection: document.getElementById('configSection'),
-    colDia: document.getElementById('colDia'),
-    colMedio: document.getElementById('colMedio'),
-    colEmisora: document.getElementById('colEmisora'),
-    colVersion: document.getElementById('colVersion'),
-    colRegion: document.getElementById('colRegion'),
+    previewSection: document.getElementById('previewSection'),
+    previewCount: document.getElementById('previewCount'),
+    previewHead: document.getElementById('previewHead'),
+    previewBody: document.getElementById('previewBody'),
+    cancelBtn: document.getElementById('cancelBtn'),
     processBtn: document.getElementById('processBtn'),
     progressSection: document.getElementById('progressSection'),
     progressText: document.getElementById('progressText'),
@@ -69,6 +78,9 @@ function initEventListeners() {
 
     // Remove file
     elements.removeFile.addEventListener('click', resetUpload);
+
+    // Cancel button
+    elements.cancelBtn.addEventListener('click', resetUpload);
 
     // Process button
     elements.processBtn.addEventListener('click', processFile);
@@ -112,14 +124,10 @@ function handleFileSelect(e) {
 
 function processUploadedFile(file) {
     // Validate file type
-    const validTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel'
-    ];
     const extension = file.name.split('.').pop().toLowerCase();
 
-    if (!validTypes.includes(file.type) && !['xlsx', 'xls'].includes(extension)) {
-        alert('Por favor, selecciona un archivo Excel válido (.xlsx o .xls)');
+    if (extension !== 'txt') {
+        alert('Por favor, selecciona un archivo TXT válido');
         return;
     }
 
@@ -132,90 +140,140 @@ function processUploadedFile(file) {
     elements.uploadBox.style.display = 'none';
 
     // Read file
-    readExcelFile(file);
+    readTxtFile(file);
 }
 
-function readExcelFile(file) {
+function readTxtFile(file) {
     const reader = new FileReader();
 
     reader.onload = function(e) {
         try {
-            const data = new Uint8Array(e.target.result);
-            state.workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const content = e.target.result;
+            const result = parseTxtContent(content);
 
-            // Get first sheet
-            const sheetName = state.workbook.SheetNames[0];
-            const worksheet = state.workbook.Sheets[sheetName];
-
-            // Convert to JSON
-            state.data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-
-            if (state.data.length === 0) {
+            if (result.data.length === 0) {
                 alert('El archivo está vacío o no tiene datos válidos');
                 resetUpload();
                 return;
             }
 
-            // Get columns
-            state.columns = Object.keys(state.data[0]);
+            state.data = result.data;
+            state.columns = result.columns;
 
-            // Populate column selectors
-            populateColumnSelectors();
-
-            // Show config section
-            elements.configSection.classList.remove('hidden');
+            // Show preview
+            showPreview();
 
         } catch (error) {
             console.error('Error reading file:', error);
-            alert('Error al leer el archivo. Asegúrate de que sea un Excel válido.');
+            alert('Error al leer el archivo: ' + error.message);
             resetUpload();
         }
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file, 'UTF-8');
 }
 
-function populateColumnSelectors() {
-    const selectors = [
-        { element: elements.colDia, keywords: ['dia', 'fecha', 'date', 'day'] },
-        { element: elements.colMedio, keywords: ['medio', 'media', 'canal'] },
-        { element: elements.colEmisora, keywords: ['emisora', 'site', 'emiso'] },
-        { element: elements.colVersion, keywords: ['version', 'vers'] },
-        { element: elements.colRegion, keywords: ['region', 'ambito', 'ámbito', 'ciudad', 'city'] }
-    ];
+function parseTxtContent(content) {
+    const lines = content.split('\n');
+    let columns = [];
+    const data = [];
+    let headerFound = false;
 
-    selectors.forEach(({ element, keywords }) => {
-        element.innerHTML = '<option value="">-- Seleccionar --</option>';
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
 
-        state.columns.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            element.appendChild(option);
+        // Skip empty lines
+        if (!line) continue;
+
+        // Skip metadata lines (Periodo:, Tarifa, Tipos, Targets, etc.)
+        if (line.startsWith('Periodo:') ||
+            line.startsWith('Tarifa') ||
+            line.startsWith('Tipos de Avisos:') ||
+            line.startsWith('Targets:')) {
+            continue;
+        }
+
+        // Check if this is the header line (starts with #|)
+        if (line.startsWith('#|') || line.startsWith('N°|') || (line.includes('|MEDIO|') && !headerFound)) {
+            columns = line.split('|').map(col => col.trim()).filter(col => col);
+            headerFound = true;
+            continue;
+        }
+
+        // If we haven't found header yet, skip
+        if (!headerFound) continue;
+
+        // Parse data line
+        const values = line.split('|').map(val => val.trim());
+
+        // Skip if not enough values
+        if (values.length < columns.length - 1) continue;
+
+        // Create row object
+        const row = {};
+        columns.forEach((col, index) => {
+            row[col] = values[index] || '';
         });
 
-        // Auto-select based on keywords
-        const colLower = state.columns.map(c => c.toLowerCase());
-        for (const keyword of keywords) {
-            const index = colLower.findIndex(c => c.includes(keyword));
-            if (index !== -1) {
-                element.value = state.columns[index];
-                break;
-            }
+        data.push(row);
+    }
+
+    return { columns, data };
+}
+
+function showPreview() {
+    // Update count
+    elements.previewCount.textContent = `${formatNumber(state.data.length)} registros`;
+
+    // Find column indices for preview
+    const previewCols = [];
+    PREVIEW_COLUMNS.forEach(colName => {
+        if (state.columns.includes(colName)) {
+            previewCols.push(colName);
         }
     });
+
+    // If no specific columns found, use first 6 columns
+    const columnsToShow = previewCols.length > 0 ? previewCols : state.columns.slice(0, 6);
+
+    // Build header
+    elements.previewHead.innerHTML = `
+        <tr>
+            ${columnsToShow.map(col => `<th>${col}</th>`).join('')}
+        </tr>
+    `;
+
+    // Build body (show first 50 rows)
+    const rowsToShow = state.data.slice(0, 50);
+    const emisoraColName = state.columns.find(c => c.includes('EMISORA') || c.includes('SITE')) || 'EMISORA/SITE';
+
+    elements.previewBody.innerHTML = rowsToShow.map(row => {
+        const emisora = (row[emisoraColName] || '').toUpperCase().trim();
+        const isEmisoraNacional = EMISORAS_NACIONAL.has(emisora);
+
+        return `<tr>
+            ${columnsToShow.map(col => {
+                const value = row[col] || '';
+                const isEmisoraCol = col.includes('EMISORA') || col.includes('SITE');
+                const className = (isEmisoraCol && isEmisoraNacional) ? 'class="emisora-nacional"' : '';
+                return `<td ${className}>${value}</td>`;
+            }).join('')}
+        </tr>`;
+    }).join('');
+
+    // Show preview section
+    elements.previewSection.classList.remove('hidden');
 }
 
 function resetUpload() {
     state.file = null;
-    state.workbook = null;
     state.data = [];
     state.columns = [];
 
     elements.fileInput.value = '';
     elements.fileInfo.classList.add('hidden');
     elements.uploadBox.style.display = 'block';
-    elements.configSection.classList.add('hidden');
+    elements.previewSection.classList.add('hidden');
 }
 
 function resetAll() {
@@ -231,34 +289,47 @@ function resetAll() {
 // Processing Logic
 // ============================================
 async function processFile() {
-    // Validate column selections
-    const colDia = elements.colDia.value;
-    const colMedio = elements.colMedio.value;
-    const colEmisora = elements.colEmisora.value;
-    const colVersion = elements.colVersion.value;
-    const colRegion = elements.colRegion.value;
-
-    if (!colDia || !colMedio || !colEmisora || !colVersion || !colRegion) {
-        alert('Por favor, selecciona todas las columnas requeridas');
-        return;
-    }
+    // Find column names dynamically
+    const colMedio = state.columns.find(c => c.toUpperCase() === 'MEDIO') || 'MEDIO';
+    const colDia = state.columns.find(c => c.toUpperCase() === 'DIA') || 'DIA';
+    const colEmisora = state.columns.find(c => c.includes('EMISORA') || c.includes('SITE')) || 'EMISORA/SITE';
+    const colVersion = state.columns.find(c => c.toUpperCase() === 'VERSION') || 'VERSION';
+    const colRegion = state.columns.find(c => c.includes('REGION') || c.includes('ÁMBITO') || c.includes('AMBITO')) || 'REGION/ÁMBITO';
 
     // Show progress
-    elements.configSection.classList.add('hidden');
+    elements.previewSection.classList.add('hidden');
     elements.progressSection.classList.remove('hidden');
     updateProgress(0, 'Preparando datos...');
 
-    // Process in chunks to avoid blocking UI
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-        // Step 1: Create groups
-        updateProgress(20, 'Creando grupos...');
+        // Step 1: First pass - mark emisoras that are automatically NACIONAL
+        updateProgress(10, 'Identificando emisoras nacionales...');
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Initialize processed data with classification
+        state.processedData = state.data.map(row => {
+            const emisora = (row[colEmisora] || '').toUpperCase().trim();
+            const isEmisoraNacional = EMISORAS_NACIONAL.has(emisora);
+
+            return {
+                ...row,
+                'CLASIFICACION_GEOGRAFICA': isEmisoraNacional ? 'NACIONAL' : row[colRegion]
+            };
+        });
+
+        // Step 2: Create groups (only for non-emisora-nacional records)
+        updateProgress(30, 'Creando grupos...');
         await new Promise(resolve => setTimeout(resolve, 50));
 
         const groups = new Map();
 
-        state.data.forEach((row, index) => {
+        state.processedData.forEach((row, index) => {
+            // Skip if already marked as NACIONAL due to emisora
+            const emisora = (row[colEmisora] || '').toUpperCase().trim();
+            if (EMISORAS_NACIONAL.has(emisora)) return;
+
             const key = createGroupKey(row, colDia, colMedio, colEmisora, colVersion);
             const region = normalizeRegion(row[colRegion]);
 
@@ -271,17 +342,10 @@ async function processFile() {
             group.regions.set(region, (group.regions.get(region) || 0) + 1);
         });
 
-        // Step 2: Classify each row
-        updateProgress(50, 'Clasificando registros...');
+        // Step 3: Classify each row based on geographic distribution
+        updateProgress(50, 'Clasificando por distribución geográfica...');
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        // Initialize classification column
-        state.processedData = state.data.map(row => ({
-            ...row,
-            'CLASIFICACION_GEOGRAFICA': row[colRegion]
-        }));
-
-        let nationalRecords = 0;
         let nationalGroups = 0;
 
         // Process each group
@@ -315,24 +379,25 @@ async function processFile() {
                         if (assigned < minCount) {
                             state.processedData[rowIndex]['CLASIFICACION_GEOGRAFICA'] = 'NACIONAL';
                             assignedNacional.set(region, assigned + 1);
-                            nationalRecords++;
                         } else {
                             state.processedData[rowIndex]['CLASIFICACION_GEOGRAFICA'] = region;
                         }
                     }
                 });
             }
-            // If not all cities present, keep original region (already set)
         });
 
-        // Step 3: Calculate statistics
+        // Step 4: Calculate statistics
         updateProgress(80, 'Calculando estadísticas...');
         await new Promise(resolve => setTimeout(resolve, 50));
 
         const distribution = {};
+        let nationalRecords = 0;
+
         state.processedData.forEach(row => {
             const clasificacion = row['CLASIFICACION_GEOGRAFICA'];
             distribution[clasificacion] = (distribution[clasificacion] || 0) + 1;
+            if (clasificacion === 'NACIONAL') nationalRecords++;
         });
 
         state.stats = {
@@ -343,7 +408,7 @@ async function processFile() {
             distribution: distribution
         };
 
-        // Step 4: Show results
+        // Step 5: Show results
         updateProgress(100, '¡Completado!');
         await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -353,20 +418,12 @@ async function processFile() {
         console.error('Error processing file:', error);
         alert('Error al procesar el archivo: ' + error.message);
         elements.progressSection.classList.add('hidden');
-        elements.configSection.classList.remove('hidden');
+        elements.previewSection.classList.remove('hidden');
     }
 }
 
 function createGroupKey(row, colDia, colMedio, colEmisora, colVersion) {
-    // Normalize date to string
-    let dia = row[colDia];
-    if (dia instanceof Date) {
-        dia = dia.toISOString().split('T')[0];
-    } else if (dia) {
-        dia = String(dia);
-    }
-
-    return `${dia}|${row[colMedio]}|${row[colEmisora]}|${row[colVersion]}`;
+    return `${row[colDia]}|${row[colMedio]}|${row[colEmisora]}|${row[colVersion]}`;
 }
 
 function normalizeRegion(region) {
