@@ -564,6 +564,349 @@ body {
     margin-top: 0.5rem;
 }
 
+/* Configuration Section */
+.config-section {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.config-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.config-badge {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.config-group {
+    margin-bottom: 1.5rem;
+}
+
+.config-group:last-child {
+    margin-bottom: 0;
+}
+
+.config-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+}
+
+.config-label svg {
+    color: var(--primary);
+}
+
+/* File Upload Inline */
+.file-upload-inline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.file-status {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.file-status.loaded {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Ámbito Selector */
+.ambito-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.radio-card {
+    cursor: pointer;
+}
+
+.radio-card input {
+    display: none;
+}
+
+.radio-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 1rem;
+    background: var(--background);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.radio-card input:checked + .radio-card-content {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.radio-card:hover .radio-card-content {
+    border-color: var(--primary-light);
+}
+
+.radio-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.radio-label {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.9375rem;
+}
+
+.radio-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Audiencia Inputs */
+.audiencia-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.audiencia-card {
+    background: var(--background);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+}
+
+.audiencia-card.norte {
+    border-left: 4px solid #3b82f6;
+}
+
+.audiencia-card.sur {
+    border-left: 4px solid #f59e0b;
+}
+
+.audiencia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.audiencia-region {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.audiencia-card.norte .audiencia-region {
+    color: #3b82f6;
+}
+
+.audiencia-card.sur .audiencia-region {
+    color: #f59e0b;
+}
+
+.audiencia-cities {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.input-with-suffix {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input-with-suffix input {
+    flex: 1;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    background: transparent;
+    min-width: 0;
+}
+
+.input-with-suffix input:focus {
+    outline: none;
+}
+
+.input-with-suffix input::placeholder {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.input-with-suffix .suffix {
+    padding: 0.75rem 1rem;
+    background: var(--background);
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-left: 1px solid var(--border);
+}
+
+.input-with-suffix.small {
+    max-width: 120px;
+}
+
+.input-with-suffix.small input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9375rem;
+}
+
+.input-with-suffix.small .suffix {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Porcentajes */
+.porcentajes-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.porcentaje-region {
+    background: var(--background);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+}
+
+.porcentaje-region.norte {
+    border-top: 3px solid #3b82f6;
+}
+
+.porcentaje-region.sur {
+    border-top: 3px solid #f59e0b;
+}
+
+.porcentaje-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.porcentaje-header span:first-child {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.porcentaje-region.norte .porcentaje-header span:first-child {
+    color: #3b82f6;
+}
+
+.porcentaje-region.sur .porcentaje-header span:first-child {
+    color: #f59e0b;
+}
+
+.porcentaje-total {
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.porcentaje-total.valid {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.porcentaje-total.invalid {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.porcentaje-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.porcentaje-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.porcentaje-item label {
+    font-size: 0.875rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.porcentaje-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: var(--radius);
+    color: #b45309;
+    font-size: 0.875rem;
+}
+
+.porcentaje-warning svg {
+    flex-shrink: 0;
+}
+
+/* Responsive adjustments for config section */
+@media (max-width: 768px) {
+    .ambito-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .audiencia-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .porcentajes-container {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;

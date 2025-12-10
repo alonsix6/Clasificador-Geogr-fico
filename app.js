@@ -1,11 +1,18 @@
 // ============================================
 // Clasificador Geográfico de Medios
+// Con cálculo de audiencia y tabla dinámica
 // ============================================
 
 // Las 7 ciudades requeridas para clasificar como NACIONAL
 const CIUDADES_NACIONAL = new Set([
     'LIMA', 'TRUJILLO', 'AREQUIPA', 'CUSCO', 'CHICLAYO', 'HUANCAYO', 'PIURA'
 ]);
+
+// Ciudades del Norte
+const CIUDADES_NORTE = new Set(['CHICLAYO', 'TRUJILLO', 'PIURA']);
+
+// Ciudades del Sur
+const CIUDADES_SUR = new Set(['AREQUIPA', 'CUSCO', 'HUANCAYO']);
 
 // Emisoras que automáticamente son NACIONAL
 const EMISORAS_NACIONAL = new Set([
@@ -24,7 +31,22 @@ let state = {
     data: [],
     columns: [],
     processedData: [],
-    stats: {}
+    stats: {},
+    rankintData: null,
+    rankintLoaded: false,
+    config: {
+        ambito: 'regiones',
+        audienciaNorte: 0,
+        audienciaSur: 0,
+        porcentajes: {
+            CHICLAYO: 33.33,
+            TRUJILLO: 33.33,
+            PIURA: 33.34,
+            AREQUIPA: 33.33,
+            CUSCO: 33.33,
+            HUANCAYO: 33.34
+        }
+    }
 };
 
 // ============================================
@@ -38,6 +60,28 @@ const elements = {
     fileName: document.getElementById('fileName'),
     fileSize: document.getElementById('fileSize'),
     removeFile: document.getElementById('removeFile'),
+    // Config Section
+    configSection: document.getElementById('configSection'),
+    rankintInput: document.getElementById('rankintInput'),
+    selectRankintBtn: document.getElementById('selectRankintBtn'),
+    rankintStatus: document.getElementById('rankintStatus'),
+    ambitoNacional: document.getElementById('ambitoNacional'),
+    ambitoRegiones: document.getElementById('ambitoRegiones'),
+    ambitoLima: document.getElementById('ambitoLima'),
+    audienciaGroup: document.getElementById('audienciaGroup'),
+    porcentajesGroup: document.getElementById('porcentajesGroup'),
+    audienciaNorte: document.getElementById('audienciaNorte'),
+    audienciaSur: document.getElementById('audienciaSur'),
+    pctChiclayo: document.getElementById('pctChiclayo'),
+    pctTrujillo: document.getElementById('pctTrujillo'),
+    pctPiura: document.getElementById('pctPiura'),
+    pctArequipa: document.getElementById('pctArequipa'),
+    pctCusco: document.getElementById('pctCusco'),
+    pctHuancayo: document.getElementById('pctHuancayo'),
+    totalNorte: document.getElementById('totalNorte'),
+    totalSur: document.getElementById('totalSur'),
+    porcentajeWarning: document.getElementById('porcentajeWarning'),
+    // Preview Section
     previewSection: document.getElementById('previewSection'),
     previewCount: document.getElementById('previewCount'),
     previewHead: document.getElementById('previewHead'),
@@ -90,6 +134,203 @@ function initEventListeners() {
 
     // New file button
     elements.newFileBtn.addEventListener('click', resetAll);
+
+    // RANKINT file input
+    elements.selectRankintBtn.addEventListener('click', () => elements.rankintInput.click());
+    elements.rankintInput.addEventListener('change', handleRankintSelect);
+
+    // Ámbito radio buttons
+    document.querySelectorAll('input[name="ambito"]').forEach(radio => {
+        radio.addEventListener('change', handleAmbitoChange);
+    });
+
+    // Audiencia inputs
+    elements.audienciaNorte.addEventListener('input', updateAudienciaConfig);
+    elements.audienciaSur.addEventListener('input', updateAudienciaConfig);
+
+    // Porcentaje inputs
+    const pctInputs = [
+        elements.pctChiclayo, elements.pctTrujillo, elements.pctPiura,
+        elements.pctArequipa, elements.pctCusco, elements.pctHuancayo
+    ];
+    pctInputs.forEach(input => {
+        input.addEventListener('input', updatePorcentajes);
+    });
+
+    // Initialize porcentajes display
+    updatePorcentajes();
+}
+
+// ============================================
+// Config Handlers
+// ============================================
+function handleAmbitoChange(e) {
+    state.config.ambito = e.target.value;
+
+    if (e.target.value === 'regiones') {
+        elements.audienciaGroup.classList.remove('hidden');
+        elements.porcentajesGroup.classList.remove('hidden');
+    } else {
+        elements.audienciaGroup.classList.add('hidden');
+        elements.porcentajesGroup.classList.add('hidden');
+    }
+}
+
+function updateAudienciaConfig() {
+    state.config.audienciaNorte = parseFloat(elements.audienciaNorte.value) || 0;
+    state.config.audienciaSur = parseFloat(elements.audienciaSur.value) || 0;
+}
+
+function updatePorcentajes() {
+    // Get values
+    const pctChiclayo = parseFloat(elements.pctChiclayo.value) || 0;
+    const pctTrujillo = parseFloat(elements.pctTrujillo.value) || 0;
+    const pctPiura = parseFloat(elements.pctPiura.value) || 0;
+    const pctArequipa = parseFloat(elements.pctArequipa.value) || 0;
+    const pctCusco = parseFloat(elements.pctCusco.value) || 0;
+    const pctHuancayo = parseFloat(elements.pctHuancayo.value) || 0;
+
+    // Calculate totals
+    const totalNorte = pctChiclayo + pctTrujillo + pctPiura;
+    const totalSur = pctArequipa + pctCusco + pctHuancayo;
+
+    // Update display
+    elements.totalNorte.textContent = `${totalNorte.toFixed(2)}%`;
+    elements.totalSur.textContent = `${totalSur.toFixed(2)}%`;
+
+    // Apply validation classes
+    const norteValid = Math.abs(totalNorte - 100) < 0.1;
+    const surValid = Math.abs(totalSur - 100) < 0.1;
+
+    elements.totalNorte.className = `porcentaje-total ${norteValid ? 'valid' : 'invalid'}`;
+    elements.totalSur.className = `porcentaje-total ${surValid ? 'valid' : 'invalid'}`;
+
+    // Show/hide warning
+    if (!norteValid || !surValid) {
+        elements.porcentajeWarning.classList.remove('hidden');
+    } else {
+        elements.porcentajeWarning.classList.add('hidden');
+    }
+
+    // Update state
+    state.config.porcentajes = {
+        CHICLAYO: pctChiclayo,
+        TRUJILLO: pctTrujillo,
+        PIURA: pctPiura,
+        AREQUIPA: pctArequipa,
+        CUSCO: pctCusco,
+        HUANCAYO: pctHuancayo
+    };
+}
+
+// ============================================
+// RANKINT File Handling
+// ============================================
+function handleRankintSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        readRankintFile(file);
+    }
+}
+
+function readRankintFile(file) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // Get first sheet
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            // Parse RANKINT data structure
+            // Row 4 has headers: Año, Mes, Canal, Título Programa, Rat#, Rat%, Rat#, Rat%
+            // Row 2 has: Regiones >>, Norte, Norte, Sur, Sur
+            state.rankintData = parseRankintData(jsonData);
+            state.rankintLoaded = true;
+
+            elements.rankintStatus.textContent = `${file.name} cargado`;
+            elements.rankintStatus.classList.add('loaded');
+
+            console.log('RANKINT data loaded:', state.rankintData);
+
+        } catch (error) {
+            console.error('Error reading RANKINT file:', error);
+            alert('Error al leer el archivo RANKINT: ' + error.message);
+            state.rankintLoaded = false;
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function parseRankintData(jsonData) {
+    const ratings = [];
+
+    // Start from row 5 (index 4) which has actual data
+    // Headers are in row 4 (index 3)
+    for (let i = 5; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        if (!row || row.length < 8) continue;
+
+        // Skip if it's a "Total" row
+        if (row[0] === 'Total' || row[0] === 'Total >>') continue;
+
+        const entry = {
+            año: row[0],
+            mes: String(row[1] || '').toUpperCase().trim(),
+            canal: String(row[2] || '').toUpperCase().trim(),
+            programa: String(row[3] || '').toUpperCase().trim(),
+            norte: {
+                ratNum: parseFloat(row[4]) || 0,
+                ratPct: parseFloat(row[5]) || 0
+            },
+            sur: {
+                ratNum: parseFloat(row[6]) || 0,
+                ratPct: parseFloat(row[7]) || 0
+            }
+        };
+
+        ratings.push(entry);
+    }
+
+    return ratings;
+}
+
+function findRating(canal, programa, mes, region) {
+    if (!state.rankintData || state.rankintData.length === 0) {
+        return null;
+    }
+
+    const canalNorm = String(canal).toUpperCase().trim();
+    const programaNorm = String(programa).toUpperCase().trim();
+    const mesNorm = String(mes).toUpperCase().trim();
+
+    // Try exact match first
+    let match = state.rankintData.find(r =>
+        r.canal === canalNorm &&
+        r.programa.includes(programaNorm.substring(0, 10)) &&
+        r.mes === mesNorm
+    );
+
+    // If no exact match, try partial match on programa
+    if (!match) {
+        match = state.rankintData.find(r =>
+            r.canal === canalNorm &&
+            (r.programa.includes(programaNorm.substring(0, 5)) || programaNorm.includes(r.programa.substring(0, 5)))
+        );
+    }
+
+    if (match) {
+        return region === 'NORTE' ? match.norte : match.sur;
+    }
+
+    return null;
 }
 
 // ============================================
@@ -160,7 +401,8 @@ function readTxtFile(file) {
             state.data = result.data;
             state.columns = result.columns;
 
-            // Show preview
+            // Show config section and preview
+            elements.configSection.classList.remove('hidden');
             showPreview();
 
         } catch (error) {
@@ -274,6 +516,7 @@ function resetUpload() {
     elements.fileInfo.classList.add('hidden');
     elements.uploadBox.style.display = 'block';
     elements.previewSection.classList.add('hidden');
+    elements.configSection.classList.add('hidden');
 }
 
 function resetAll() {
@@ -295,9 +538,12 @@ async function processFile() {
     const colEmisora = state.columns.find(c => c.includes('EMISORA') || c.includes('SITE')) || 'EMISORA/SITE';
     const colVersion = state.columns.find(c => c.toUpperCase() === 'VERSION') || 'VERSION';
     const colRegion = state.columns.find(c => c.includes('REGION') || c.includes('ÁMBITO') || c.includes('AMBITO')) || 'REGION/ÁMBITO';
+    const colPrograma = state.columns.find(c => c.includes('PROGRAMA') || c.includes('TIPO')) || 'PROGRAMA/TIPO DE SITE';
+    const colSpots = state.columns.find(c => c.toUpperCase().includes('SPOT')) || 'SPOTS';
 
     // Show progress
     elements.previewSection.classList.add('hidden');
+    elements.configSection.classList.add('hidden');
     elements.progressSection.classList.remove('hidden');
     updateProgress(0, 'Preparando datos...');
 
@@ -308,14 +554,52 @@ async function processFile() {
         updateProgress(10, 'Identificando emisoras nacionales...');
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        // Initialize processed data with classification
+        // Get audiencia config
+        updateAudienciaConfig();
+
+        // Initialize processed data with classification and calculations
         state.processedData = state.data.map(row => {
             const emisora = (row[colEmisora] || '').toUpperCase().trim();
             const isEmisoraNacional = EMISORAS_NACIONAL.has(emisora);
+            const regionRaw = (row[colRegion] || '').toUpperCase().trim();
+            const region = normalizeRegion(regionRaw);
+
+            // Determine zona (NORTE o SUR)
+            let zona = '';
+            if (CIUDADES_NORTE.has(region)) {
+                zona = 'NORTE';
+            } else if (CIUDADES_SUR.has(region)) {
+                zona = 'SUR';
+            }
+
+            // Calculate audiencia value based on config
+            let audienciaMiles = 0;
+            let porcentajeCiudad = 0;
+            let valorCalculado = 0;
+
+            if (state.config.ambito === 'regiones' && zona) {
+                if (zona === 'NORTE') {
+                    audienciaMiles = state.config.audienciaNorte;
+                    porcentajeCiudad = state.config.porcentajes[region] || 0;
+                } else if (zona === 'SUR') {
+                    audienciaMiles = state.config.audienciaSur;
+                    porcentajeCiudad = state.config.porcentajes[region] || 0;
+                }
+
+                // Get spots value
+                const spots = parseFloat(row[colSpots]) || 0;
+
+                // Calculate: SPOTS × audiencia_en_miles × (porcentaje/100)
+                valorCalculado = spots * audienciaMiles * (porcentajeCiudad / 100);
+            }
 
             return {
                 ...row,
-                'CLASIFICACION_GEOGRAFICA': isEmisoraNacional ? 'NACIONAL' : row[colRegion]
+                'CLASIFICACION_GEOGRAFICA': isEmisoraNacional ? 'NACIONAL' : region,
+                'ZONA': zona,
+                'AUDIENCIA_MILES': audienciaMiles,
+                'PCT_CIUDAD': porcentajeCiudad,
+                'VALOR_CALCULADO': valorCalculado
             };
         });
 
@@ -419,6 +703,7 @@ async function processFile() {
         alert('Error al procesar el archivo: ' + error.message);
         elements.progressSection.classList.add('hidden');
         elements.previewSection.classList.remove('hidden');
+        elements.configSection.classList.remove('hidden');
     }
 }
 
@@ -482,15 +767,23 @@ function buildDistributionChart() {
 }
 
 // ============================================
-// Download
+// Download with Pivot Table
 // ============================================
 function downloadResult() {
     try {
         // Create new workbook
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(state.processedData);
 
+        // Sheet 1: Data clasificada
+        const ws = XLSX.utils.json_to_sheet(state.processedData);
         XLSX.utils.book_append_sheet(wb, ws, 'Clasificado');
+
+        // Sheet 2: Tabla Dinámica (Pivot)
+        if (state.config.ambito === 'regiones') {
+            const pivotData = createPivotTable();
+            const wsPivot = XLSX.utils.json_to_sheet(pivotData);
+            XLSX.utils.book_append_sheet(wb, wsPivot, 'Tabla Dinamica');
+        }
 
         // Generate filename
         const originalName = state.file.name.replace(/\.[^/.]+$/, '');
@@ -503,6 +796,96 @@ function downloadResult() {
         console.error('Error downloading file:', error);
         alert('Error al descargar el archivo');
     }
+}
+
+function createPivotTable() {
+    // Find column names
+    const colEmisora = state.columns.find(c => c.includes('EMISORA') || c.includes('SITE')) || 'EMISORA/SITE';
+    const colPrograma = state.columns.find(c => c.includes('PROGRAMA') || c.includes('TIPO')) || 'PROGRAMA/TIPO DE SITE';
+    const colSpots = state.columns.find(c => c.toUpperCase().includes('SPOT')) || 'SPOTS';
+    const colDia = state.columns.find(c => c.toUpperCase() === 'DIA') || 'DIA';
+
+    // Create aggregated data
+    const pivotMap = new Map();
+
+    state.processedData.forEach(row => {
+        // Extract year and month from DIA column (format: DD/MM/YYYY or similar)
+        const diaValue = row[colDia] || '';
+        let año = '';
+        let mes = '';
+
+        // Try to parse date
+        if (diaValue) {
+            const parts = diaValue.split('/');
+            if (parts.length >= 3) {
+                año = parts[2];
+                mes = getMonthName(parseInt(parts[1]));
+            }
+        }
+
+        const emisora = row[colEmisora] || '';
+        const programa = row[colPrograma] || '';
+        const spots = parseFloat(row[colSpots]) || 0;
+        const valorCalculado = row['VALOR_CALCULADO'] || 0;
+        const zona = row['ZONA'] || '';
+        const ciudad = row['CLASIFICACION_GEOGRAFICA'] || '';
+
+        // Create unique key for pivot
+        const key = `${año}|${mes}|${emisora}|${programa}|${zona}|${ciudad}`;
+
+        if (!pivotMap.has(key)) {
+            pivotMap.set(key, {
+                'AÑO': año,
+                'MES': mes,
+                'EMISORA/SITE': emisora,
+                'PROGRAMA/TIPO DE SITE': programa,
+                'ZONA': zona,
+                'CIUDAD': ciudad,
+                'SUMA_SPOTS': 0,
+                'VALOR_AUDIENCIA': 0
+            });
+        }
+
+        const entry = pivotMap.get(key);
+        entry['SUMA_SPOTS'] += spots;
+        entry['VALOR_AUDIENCIA'] += valorCalculado;
+    });
+
+    // Convert to array and sort
+    const pivotArray = Array.from(pivotMap.values());
+
+    // Sort by AÑO, MES, EMISORA, PROGRAMA
+    pivotArray.sort((a, b) => {
+        if (a['AÑO'] !== b['AÑO']) return a['AÑO'].localeCompare(b['AÑO']);
+        if (a['MES'] !== b['MES']) return getMonthOrder(a['MES']) - getMonthOrder(b['MES']);
+        if (a['EMISORA/SITE'] !== b['EMISORA/SITE']) return a['EMISORA/SITE'].localeCompare(b['EMISORA/SITE']);
+        return a['PROGRAMA/TIPO DE SITE'].localeCompare(b['PROGRAMA/TIPO DE SITE']);
+    });
+
+    // Round values
+    pivotArray.forEach(row => {
+        row['SUMA_SPOTS'] = Math.round(row['SUMA_SPOTS'] * 100) / 100;
+        row['VALOR_AUDIENCIA'] = Math.round(row['VALOR_AUDIENCIA'] * 100) / 100;
+    });
+
+    return pivotArray;
+}
+
+function getMonthName(monthNum) {
+    const months = [
+        '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return months[monthNum] || '';
+}
+
+function getMonthOrder(monthName) {
+    const months = {
+        'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4,
+        'Mayo': 5, 'Junio': 6, 'Julio': 7, 'Agosto': 8,
+        'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12
+    };
+    return months[monthName] || 0;
 }
 
 // ============================================
