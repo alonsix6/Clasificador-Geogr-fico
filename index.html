@@ -70,6 +70,218 @@
                 </div>
             </section>
 
+            <!-- Configuración de Audiencia Section -->
+            <section class="config-section hidden" id="configSection">
+                <div class="config-header">
+                    <h3>Configuración de Audiencia y Ratings</h3>
+                    <span class="config-badge">Paso 2</span>
+                </div>
+
+                <!-- Carga de archivos RANKINT por zona -->
+                <div class="config-group">
+                    <label class="config-label">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4C4 2.89543 4.89543 2 6 2H10L14 6V16C14 17.1046 13.1046 18 12 18H6C4.89543 18 4 17.1046 4 16V4Z" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M10 2V6H14" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        Archivos RANKINT (Excel con ratings - uno o varios por zona)
+                    </label>
+                    <p class="config-hint">Puedes subir un archivo por ciudad o un archivo combinado por zona</p>
+
+                    <div class="rankint-zones">
+                        <!-- Zona Norte -->
+                        <div class="rankint-zone norte">
+                            <div class="zone-header">
+                                <span class="zone-title">NORTE</span>
+                                <span class="zone-cities">Chiclayo, Trujillo, Piura</span>
+                            </div>
+                            <div class="zone-files" id="norteFilesList"></div>
+                            <div class="zone-upload">
+                                <input type="file" id="rankintNorteInput" accept=".xlsx,.xls" multiple hidden>
+                                <button class="btn btn-outline btn-sm" id="selectRankintNorteBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Agregar Excel(s)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Zona Sur -->
+                        <div class="rankint-zone sur">
+                            <div class="zone-header">
+                                <span class="zone-title">SUR</span>
+                                <span class="zone-cities">Arequipa, Cusco, Huancayo</span>
+                            </div>
+                            <div class="zone-files" id="surFilesList"></div>
+                            <div class="zone-upload">
+                                <input type="file" id="rankintSurInput" accept=".xlsx,.xls" multiple hidden>
+                                <button class="btn btn-outline btn-sm" id="selectRankintSurBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Agregar Excel(s)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rankint-summary hidden" id="rankintSummary">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span id="rankintSummaryText">0 archivos cargados</span>
+                    </div>
+                </div>
+
+                <!-- Selector de Ámbito -->
+                <div class="config-group">
+                    <label class="config-label">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M10 3C10 3 7 6.5 7 10C7 13.5 10 17 10 17M10 3C10 3 13 6.5 13 10C13 13.5 10 17 10 17M3 10H17" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        Seleccionar Ámbito Geográfico
+                    </label>
+                    <div class="ambito-selector">
+                        <label class="radio-card">
+                            <input type="radio" name="ambito" value="nacional" id="ambitoNacional">
+                            <span class="radio-card-content">
+                                <span class="radio-icon">🇵🇪</span>
+                                <span class="radio-label">NACIONAL</span>
+                                <span class="radio-desc">Todo el país</span>
+                            </span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ambito" value="regiones" id="ambitoRegiones" checked>
+                            <span class="radio-card-content">
+                                <span class="radio-icon">🗺️</span>
+                                <span class="radio-label">REGIONES</span>
+                                <span class="radio-desc">Norte y Sur</span>
+                            </span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ambito" value="lima" id="ambitoLima">
+                            <span class="radio-card-content">
+                                <span class="radio-icon">🏙️</span>
+                                <span class="radio-label">LIMA</span>
+                                <span class="radio-desc">Solo Lima</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Campos de Audiencia (solo visible para REGIONES) -->
+                <div class="config-group audiencia-group" id="audienciaGroup">
+                    <label class="config-label">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 7C13 8.65685 11.6569 10 10 10C8.34315 10 7 8.65685 7 7C7 5.34315 8.34315 4 10 4C11.6569 4 13 5.34315 13 7Z" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M10 13C6.13401 13 3 14.7909 3 17H17C17 14.7909 13.866 13 10 13Z" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        Audiencia en Miles (ej: 209 = 209,000 personas)
+                    </label>
+                    <div class="audiencia-inputs">
+                        <div class="audiencia-card norte">
+                            <div class="audiencia-header">
+                                <span class="audiencia-region">NORTE</span>
+                                <span class="audiencia-cities">Chiclayo, Trujillo, Piura</span>
+                            </div>
+                            <div class="input-with-suffix">
+                                <input type="number" id="audienciaNorte" placeholder="209" min="0" step="0.001">
+                                <span class="suffix">,000</span>
+                            </div>
+                        </div>
+                        <div class="audiencia-card sur">
+                            <div class="audiencia-header">
+                                <span class="audiencia-region">SUR</span>
+                                <span class="audiencia-cities">Arequipa, Cusco, Huancayo</span>
+                            </div>
+                            <div class="input-with-suffix">
+                                <input type="number" id="audienciaSur" placeholder="156" min="0" step="0.001">
+                                <span class="suffix">,000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Porcentajes por Ciudad -->
+                <div class="config-group porcentajes-group" id="porcentajesGroup">
+                    <label class="config-label">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M10 6V10L13 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        Distribución Porcentual por Ciudad
+                    </label>
+                    <div class="porcentajes-container">
+                        <div class="porcentaje-region norte">
+                            <div class="porcentaje-header">
+                                <span>NORTE</span>
+                                <span class="porcentaje-total" id="totalNorte">0%</span>
+                            </div>
+                            <div class="porcentaje-inputs">
+                                <div class="porcentaje-item">
+                                    <label>Chiclayo</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctChiclayo" value="33.33" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                                <div class="porcentaje-item">
+                                    <label>Trujillo</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctTrujillo" value="33.33" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                                <div class="porcentaje-item">
+                                    <label>Piura</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctPiura" value="33.34" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="porcentaje-region sur">
+                            <div class="porcentaje-header">
+                                <span>SUR</span>
+                                <span class="porcentaje-total" id="totalSur">0%</span>
+                            </div>
+                            <div class="porcentaje-inputs">
+                                <div class="porcentaje-item">
+                                    <label>Arequipa</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctArequipa" value="33.33" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                                <div class="porcentaje-item">
+                                    <label>Cusco</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctCusco" value="33.33" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                                <div class="porcentaje-item">
+                                    <label>Huancayo</label>
+                                    <div class="input-with-suffix small">
+                                        <input type="number" id="pctHuancayo" value="33.34" min="0" max="100" step="0.01">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="porcentaje-warning hidden" id="porcentajeWarning">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V8M8 11H8.01M14 8A6 6 0 112 8a6 6 0 0112 0Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span>Los porcentajes de cada región deben sumar 100%</span>
+                    </div>
+                </div>
+            </section>
+
             <!-- Preview Section -->
             <section class="preview-section hidden" id="previewSection">
                 <div class="preview-header">
