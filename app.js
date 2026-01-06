@@ -32,8 +32,15 @@ let state = {
     columns: [],
     processedData: [],
     stats: {},
-    rankintData: null,
-    rankintLoaded: false,
+    // Archivos RANKINT por zona
+    rankintFiles: {
+        norte: [], // Array de { file, data }
+        sur: []    // Array de { file, data }
+    },
+    rankintDataCombined: {
+        norte: [],
+        sur: []
+    },
     config: {
         ambito: 'regiones',
         audienciaNorte: 0,
@@ -62,9 +69,15 @@ const elements = {
     removeFile: document.getElementById('removeFile'),
     // Config Section
     configSection: document.getElementById('configSection'),
-    rankintInput: document.getElementById('rankintInput'),
-    selectRankintBtn: document.getElementById('selectRankintBtn'),
-    rankintStatus: document.getElementById('rankintStatus'),
+    // RANKINT por zona
+    rankintNorteInput: document.getElementById('rankintNorteInput'),
+    selectRankintNorteBtn: document.getElementById('selectRankintNorteBtn'),
+    norteFilesList: document.getElementById('norteFilesList'),
+    rankintSurInput: document.getElementById('rankintSurInput'),
+    selectRankintSurBtn: document.getElementById('selectRankintSurBtn'),
+    surFilesList: document.getElementById('surFilesList'),
+    rankintSummary: document.getElementById('rankintSummary'),
+    rankintSummaryText: document.getElementById('rankintSummaryText'),
     ambitoNacional: document.getElementById('ambitoNacional'),
     ambitoRegiones: document.getElementById('ambitoRegiones'),
     ambitoLima: document.getElementById('ambitoLima'),
@@ -135,9 +148,11 @@ function initEventListeners() {
     // New file button
     elements.newFileBtn.addEventListener('click', resetAll);
 
-    // RANKINT file input
-    elements.selectRankintBtn.addEventListener('click', () => elements.rankintInput.click());
-    elements.rankintInput.addEventListener('change', handleRankintSelect);
+    // RANKINT file inputs por zona
+    elements.selectRankintNorteBtn.addEventListener('click', () => elements.rankintNorteInput.click());
+    elements.rankintNorteInput.addEventListener('change', (e) => handleRankintZoneSelect(e, 'norte'));
+    elements.selectRankintSurBtn.addEventListener('click', () => elements.rankintSurInput.click());
+    elements.rankintSurInput.addEventListener('change', (e) => handleRankintZoneSelect(e, 'sur'));
 
     // Ámbito radio buttons
     document.querySelectorAll('input[name="ambito"]').forEach(radio => {
@@ -224,16 +239,22 @@ function updatePorcentajes() {
 }
 
 // ============================================
-// RANKINT File Handling
+// RANKINT File Handling (Multiple files per zone)
 // ============================================
-function handleRankintSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        readRankintFile(file);
-    }
+function handleRankintZoneSelect(e, zona) {
+    const files = e.target.files;
+    if (files.length === 0) return;
+
+    // Process each file
+    Array.from(files).forEach(file => {
+        readRankintZoneFile(file, zona);
+    });
+
+    // Reset input to allow selecting same file again
+    e.target.value = '';
 }
 
-function readRankintFile(file) {
+function readRankintZoneFile(file, zona) {
     const reader = new FileReader();
 
     reader.onload = function(e) {
@@ -248,62 +269,164 @@ function readRankintFile(file) {
             // Convert to JSON
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-            // Parse RANKINT data structure
-            // Row 4 has headers: Año, Mes, Canal, Título Programa, Rat#, Rat%, Rat#, Rat%
-            // Row 2 has: Regiones >>, Norte, Norte, Sur, Sur
-            state.rankintData = parseRankintData(jsonData);
-            state.rankintLoaded = true;
+            // Parse RANKINT data
+            const parsedData = parseRankintZoneData(jsonData, zona);
 
-            elements.rankintStatus.textContent = `${file.name} cargado`;
-            elements.rankintStatus.classList.add('loaded');
+            // Add to state
+            state.rankintFiles[zona].push({
+                file: file,
+                name: file.name,
+                data: parsedData
+            });
 
-            console.log('RANKINT data loaded:', state.rankintData);
+            // Update combined data
+            updateCombinedRankintData(zona);
+
+            // Update UI
+            renderZoneFiles(zona);
+            updateRankintSummary();
+
+            console.log(`RANKINT ${zona} file loaded:`, file.name, parsedData.length, 'entries');
 
         } catch (error) {
             console.error('Error reading RANKINT file:', error);
-            alert('Error al leer el archivo RANKINT: ' + error.message);
-            state.rankintLoaded = false;
+            alert(`Error al leer el archivo ${file.name}: ${error.message}`);
         }
     };
 
     reader.readAsArrayBuffer(file);
 }
 
-function parseRankintData(jsonData) {
+function parseRankintZoneData(jsonData, zona) {
     const ratings = [];
 
-    // Start from row 5 (index 4) which has actual data
-    // Headers are in row 4 (index 3)
-    for (let i = 5; i < jsonData.length; i++) {
+    // Detect format - could be single zone or combined
+    // Look for header row
+    let headerRowIndex = -1;
+    let hasBothZones = false;
+
+    for (let i = 0; i < Math.min(10, jsonData.length); i++) {
         const row = jsonData[i];
-        if (!row || row.length < 8) continue;
+        if (!row) continue;
+
+        const rowStr = row.join('|').toUpperCase();
+
+        // Check if it has both Norte and Sur columns
+        if (rowStr.includes('NORTE') && rowStr.includes('SUR')) {
+            hasBothZones = true;
+        }
+
+        // Find header row with Año, Mes, Canal
+        if (rowStr.includes('AÑO') || rowStr.includes('MES') || rowStr.includes('CANAL')) {
+            headerRowIndex = i;
+            break;
+        }
+    }
+
+    // Start parsing from data rows
+    const startRow = headerRowIndex >= 0 ? headerRowIndex + 1 : 5;
+
+    for (let i = startRow; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        if (!row || row.length < 4) continue;
 
         // Skip if it's a "Total" row
-        if (row[0] === 'Total' || row[0] === 'Total >>') continue;
+        const firstCell = String(row[0] || '').toUpperCase();
+        if (firstCell.includes('TOTAL')) continue;
 
-        const entry = {
-            año: row[0],
-            mes: String(row[1] || '').toUpperCase().trim(),
-            canal: String(row[2] || '').toUpperCase().trim(),
-            programa: String(row[3] || '').toUpperCase().trim(),
-            norte: {
+        // Parse based on format
+        if (hasBothZones) {
+            // Combined format: Año, Mes, Canal, Programa, NorteRat#, NorteRat%, SurRat#, SurRat%
+            const entry = {
+                año: row[0],
+                mes: String(row[1] || '').toUpperCase().trim(),
+                canal: String(row[2] || '').toUpperCase().trim(),
+                programa: String(row[3] || '').toUpperCase().trim(),
+                ratNum: zona === 'norte' ? (parseFloat(row[4]) || 0) : (parseFloat(row[6]) || 0),
+                ratPct: zona === 'norte' ? (parseFloat(row[5]) || 0) : (parseFloat(row[7]) || 0)
+            };
+            if (entry.canal || entry.programa) {
+                ratings.push(entry);
+            }
+        } else {
+            // Single zone format: Año, Mes, Canal, Programa, Rat#, Rat%
+            const entry = {
+                año: row[0],
+                mes: String(row[1] || '').toUpperCase().trim(),
+                canal: String(row[2] || '').toUpperCase().trim(),
+                programa: String(row[3] || '').toUpperCase().trim(),
                 ratNum: parseFloat(row[4]) || 0,
                 ratPct: parseFloat(row[5]) || 0
-            },
-            sur: {
-                ratNum: parseFloat(row[6]) || 0,
-                ratPct: parseFloat(row[7]) || 0
+            };
+            if (entry.canal || entry.programa) {
+                ratings.push(entry);
             }
-        };
-
-        ratings.push(entry);
+        }
     }
 
     return ratings;
 }
 
-function findRating(canal, programa, mes, region) {
-    if (!state.rankintData || state.rankintData.length === 0) {
+function updateCombinedRankintData(zona) {
+    // Combine all files for this zone
+    state.rankintDataCombined[zona] = [];
+
+    state.rankintFiles[zona].forEach(fileEntry => {
+        state.rankintDataCombined[zona].push(...fileEntry.data);
+    });
+}
+
+function renderZoneFiles(zona) {
+    const listEl = zona === 'norte' ? elements.norteFilesList : elements.surFilesList;
+    const files = state.rankintFiles[zona];
+
+    if (files.length === 0) {
+        listEl.innerHTML = '';
+        return;
+    }
+
+    listEl.innerHTML = files.map((fileEntry, index) => `
+        <div class="zone-file-item" data-zone="${zona}" data-index="${index}">
+            <span class="zone-file-name">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M11.5 3.5L5.5 9.5L2.5 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                ${fileEntry.name}
+            </span>
+            <button class="zone-file-remove" onclick="removeRankintFile('${zona}', ${index})" title="Eliminar">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeRankintFile(zona, index) {
+    state.rankintFiles[zona].splice(index, 1);
+    updateCombinedRankintData(zona);
+    renderZoneFiles(zona);
+    updateRankintSummary();
+}
+
+function updateRankintSummary() {
+    const totalNorte = state.rankintFiles.norte.length;
+    const totalSur = state.rankintFiles.sur.length;
+    const total = totalNorte + totalSur;
+
+    if (total > 0) {
+        elements.rankintSummary.classList.remove('hidden');
+        const entriesNorte = state.rankintDataCombined.norte.length;
+        const entriesSur = state.rankintDataCombined.sur.length;
+        elements.rankintSummaryText.textContent = `${total} archivo(s) cargados (Norte: ${entriesNorte} registros, Sur: ${entriesSur} registros)`;
+    } else {
+        elements.rankintSummary.classList.add('hidden');
+    }
+}
+
+function findRating(canal, programa, mes, zona) {
+    const data = state.rankintDataCombined[zona.toLowerCase()];
+    if (!data || data.length === 0) {
         return null;
     }
 
@@ -312,7 +435,7 @@ function findRating(canal, programa, mes, region) {
     const mesNorm = String(mes).toUpperCase().trim();
 
     // Try exact match first
-    let match = state.rankintData.find(r =>
+    let match = data.find(r =>
         r.canal === canalNorm &&
         r.programa.includes(programaNorm.substring(0, 10)) &&
         r.mes === mesNorm
@@ -320,14 +443,14 @@ function findRating(canal, programa, mes, region) {
 
     // If no exact match, try partial match on programa
     if (!match) {
-        match = state.rankintData.find(r =>
+        match = data.find(r =>
             r.canal === canalNorm &&
             (r.programa.includes(programaNorm.substring(0, 5)) || programaNorm.includes(r.programa.substring(0, 5)))
         );
     }
 
     if (match) {
-        return region === 'NORTE' ? match.norte : match.sur;
+        return { ratNum: match.ratNum, ratPct: match.ratPct };
     }
 
     return null;

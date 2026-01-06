@@ -643,6 +643,162 @@ body {
     font-size: 0.875rem;
 }
 
+.btn-outline {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+/* Config Hint */
+.config-hint {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    margin-top: -0.5rem;
+}
+
+/* RANKINT Zones */
+.rankint-zones {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.rankint-zone {
+    background: var(--background);
+    border-radius: var(--radius);
+    padding: 1rem;
+    border: 1px solid var(--border);
+}
+
+.rankint-zone.norte {
+    border-top: 3px solid #3b82f6;
+}
+
+.rankint-zone.sur {
+    border-top: 3px solid #f59e0b;
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.zone-title {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.rankint-zone.norte .zone-title {
+    color: #3b82f6;
+}
+
+.rankint-zone.sur .zone-title {
+    color: #f59e0b;
+}
+
+.zone-cities {
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+}
+
+.zone-files {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    min-height: 24px;
+}
+
+.zone-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface);
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    border: 1px solid var(--border);
+}
+
+.zone-file-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+}
+
+.zone-file-name svg {
+    flex-shrink: 0;
+    color: var(--success);
+}
+
+.zone-file-remove {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zone-file-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.zone-upload {
+    display: flex;
+    justify-content: center;
+}
+
+.zone-upload .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* RANKINT Summary */
+.rankint-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: var(--radius);
+    color: var(--success);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.rankint-summary svg {
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .rankint-zones {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Ámbito Selector */
 .ambito-selector {
     display: grid;

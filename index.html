@@ -77,21 +77,60 @@
                     <span class="config-badge">Paso 2</span>
                 </div>
 
-                <!-- Carga de archivo RANKINT -->
+                <!-- Carga de archivos RANKINT por zona -->
                 <div class="config-group">
                     <label class="config-label">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 4C4 2.89543 4.89543 2 6 2H10L14 6V16C14 17.1046 13.1046 18 12 18H6C4.89543 18 4 17.1046 4 16V4Z" stroke="currentColor" stroke-width="1.5"/>
                             <path d="M10 2V6H14" stroke="currentColor" stroke-width="1.5"/>
                         </svg>
-                        Archivo RANKINT (Excel con ratings Norte/Sur)
+                        Archivos RANKINT (Excel con ratings - uno o varios por zona)
                     </label>
-                    <div class="file-upload-inline">
-                        <input type="file" id="rankintInput" accept=".xlsx,.xls" hidden>
-                        <button class="btn btn-secondary btn-sm" id="selectRankintBtn">
-                            Seleccionar Excel RANKINT
-                        </button>
-                        <span class="file-status" id="rankintStatus">No seleccionado</span>
+                    <p class="config-hint">Puedes subir un archivo por ciudad o un archivo combinado por zona</p>
+
+                    <div class="rankint-zones">
+                        <!-- Zona Norte -->
+                        <div class="rankint-zone norte">
+                            <div class="zone-header">
+                                <span class="zone-title">NORTE</span>
+                                <span class="zone-cities">Chiclayo, Trujillo, Piura</span>
+                            </div>
+                            <div class="zone-files" id="norteFilesList"></div>
+                            <div class="zone-upload">
+                                <input type="file" id="rankintNorteInput" accept=".xlsx,.xls" multiple hidden>
+                                <button class="btn btn-outline btn-sm" id="selectRankintNorteBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Agregar Excel(s)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Zona Sur -->
+                        <div class="rankint-zone sur">
+                            <div class="zone-header">
+                                <span class="zone-title">SUR</span>
+                                <span class="zone-cities">Arequipa, Cusco, Huancayo</span>
+                            </div>
+                            <div class="zone-files" id="surFilesList"></div>
+                            <div class="zone-upload">
+                                <input type="file" id="rankintSurInput" accept=".xlsx,.xls" multiple hidden>
+                                <button class="btn btn-outline btn-sm" id="selectRankintSurBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Agregar Excel(s)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rankint-summary hidden" id="rankintSummary">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span id="rankintSummaryText">0 archivos cargados</span>
                     </div>
                 </div>
 
